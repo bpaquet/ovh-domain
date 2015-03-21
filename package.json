@@ -1,0 +1,11 @@
+{
+  "name": "node-ovh-domain",
+  "description": "Command line tools for OVH API domain",
+  "version": "0.0.1",
+  "author": "Bertrand Paquet <bertrand.paquet@gmail.com>",
+  "dependencies": {
+    "optimist": "0.6.1",
+    "ovh": "1.1.x",
+    "async": "x"
+  }
+}
