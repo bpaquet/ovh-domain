@@ -7,5 +7,19 @@
     "optimist": "0.6.1",
     "ovh": "1.1.x",
     "async": "x"
+  },
+  "homepage": "https://github.com/bpaquet/ovh-domain",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bpaquet/ovh-domain.git"
+  },
+  "licenses": [
+    {
+      "type": "Apache2",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
+  "bin": {
+    "ovh-domain": "./domain.js"
   }
 }
