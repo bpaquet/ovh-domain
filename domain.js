@@ -3,13 +3,6 @@
 var argv = require('optimist').argv;
 var async = require('async');
 
-var syntax = 'Unable to parse commande line !\nSyntax: ovh-domain command args\nExample: ovh-domain help';
-
-function syntax_error() {
-  console.error(syntax);
-  process.exit(1);
-}
-
 function api() {
   if (process.env.APP_KEY === undefined || process.env.APP_SECRET === undefined || process.env.CONSUMER_KEY === undefined) {
     console.error('Please set env vars APP_KEY APP_SECRET CONSUMER_KEY');
@@ -38,7 +31,9 @@ function api() {
 }
 
 if (argv._.length === 0) {
-  syntax_error();
+  console.error('Please specify a command.');
+  console.error('List of available commands: ovh-domain help');
+  process.exit(1);
 }
 
 function fill(s, k) {
