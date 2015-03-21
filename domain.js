@@ -19,15 +19,20 @@ function api() {
     endpoint: process.env.ENDPOINT || 'ovh-eu',
     appKey: process.env.APP_KEY,
     appSecret: process.env.APP_SECRET,
-    consumerKey: process.env.CONSUMER_KEY
+    consumerKey: process.env.CONSUMER_KEY,
+    debug: argv.debug,
   });
   return function(method, url, body, callback) {
+    if (!callback) {
+      callback = body;
+      body = undefined;
+    }
     ovh.request(method, url, body, function(err, result) {
       if (err) {
-        console.error('API Call error', url, err);
+        console.error('API Call error', url, err, body ? JSON.stringify(body) : '');
         process.exit(1);
       }
-      (body || callback)(result);
+      callback(result);
     });
   };
 }
@@ -113,7 +118,7 @@ var commands = {
       console.log('Generate a consumer key');
     }
   },
-  domains: {
+  zones: {
     run: function() {
       api()('GET', '/domain/zone', function (zones) {
         console.log('Number of zones', zones.length);
@@ -156,6 +161,77 @@ var commands = {
       console.log('List all records in a zone');
     },
     args_min : 1,
+  },
+  create: {
+    run: function(params) {
+      if (params[2] === 'CNAME' && !params[3].toString().match(/\.$/)) {
+        console.error('Wrong CNAME value, must end with .', params[2]);
+        process.exit(1);
+      }
+      api()('GET', '/domain/zone/' + params[0] + '/record?subDomain=' + params[1], function (r) {
+        if (r.length === 1) {
+          console.error('Record already exists in zone', params[0], params[1]);
+          process.exit(1);
+        }
+        api()('POST', '/domain/zone/' + params[0] + '/record', {
+          fieldType: params[2],
+          target: params[3],
+          subDomain: params[1],
+        }, function() {
+          console.log('OK, created record', params[1], params[2], params[3]);
+        });
+      });
+    },
+    help: function() {
+      console.log('Syntax: ovh-domain create <zone_name> <record_name> <type> <target>');
+      console.log('Create a new record in a given zone.');
+    },
+    args_min : 4,
+  },
+  update: {
+    run: function(params) {
+      api()('GET', '/domain/zone/' + params[0] + '/record?subDomain=' + params[1], function (r) {
+        if (r.length !== 1) {
+          console.error('Record not found in zone', params[0], params[1]);
+          process.exit(1);
+        }
+        api()('GET', '/domain/zone/' + params[0] + '/record/' + r[0], function (rec) {
+          if (rec.fieldType === 'CNAME' && !params[2].toString().match(/\.$/)) {
+            console.error('Wrong CNAME value, must end with .', params[2]);
+            process.exit(1);
+          }
+          console.log(rec);
+          api()('PUT', '/domain/zone/' + params[0] + '/record/' + r[0], {
+            target: params[2],
+          }, function() {
+            console.log('OK, updated record', params[1], rec.fieldType, params[2]);
+          });
+        });
+      });
+    },
+    help: function() {
+      console.log('Syntax: ovh-domain create <zone_name> <record_name> <target>');
+      console.log('Update a record in a given zone.');
+    },
+    args_min : 3,
+  },
+  delete: {
+    run: function(params) {
+      api()('GET', '/domain/zone/' + params[0] + '/record?subDomain=' + params[1], function (r) {
+        if (r.length !== 1) {
+          console.error('Record not found in zone', params[0], params[1]);
+          process.exit(1);
+        }
+        api()('DELETE', '/domain/zone/' + params[0] + '/record/' + r[0], function() {
+          console.log('OK, deleted record', params[1]);
+        });
+      });
+    },
+    help: function() {
+      console.log('Syntax: ovh-domain delete <zone_name> <record_name>');
+      console.log('Delete a record in a given zone.');
+    },
+    args_min : 2,
   }
 };
 

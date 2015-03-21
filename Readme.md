@@ -39,4 +39,6 @@ Some examples :
 
 * get zones list : ``ovh-domain zones``
 * view a zone : ``ovh-domain show toto.com``
-* ...
+* create a record: ``ovh-domain create toto.com r1 CNAME www.google.com.``
+* delete a record: ``ovh-domain delete toto.com r1``
+* update a record: ``ovh-domain create toto.com r1 www.yahoo.com.``
