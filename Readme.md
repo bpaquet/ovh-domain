@@ -1,7 +1,7 @@
 ovh-domain
 ===
 
-Command line tool to view and edit OVH Domain zone through api.
+Command line tool to view and edit OVH Domain zone through [api](api.ovh.com).
 
 Installation
 ---
@@ -10,6 +10,8 @@ Installation
 
 Configuration
 ---
+
+Create an [application](https://eu.api.ovh.com/createApp/).
 
     export APP_KEY=your_app_key
     export APP_SECRET=your_app_secret
