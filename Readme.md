@@ -1,7 +1,7 @@
 ovh-domain
 ===
 
-Command line tool to view and edit OVH Domain zone through api.
+Command line tool to view and edit OVH Domain zone through [api](api.ovh.com).
 
 Installation
 ---
