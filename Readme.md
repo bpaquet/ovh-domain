@@ -11,22 +11,18 @@ Installation
 Configuration
 ---
 
-Create an [application](https://eu.api.ovh.com/createApp/).
+* Create an [application](https://eu.api.ovh.com/createApp/).
+* Configure ovh-domain
 
-    export APP_KEY=your_app_key
-    export APP_SECRET=your_app_secret
+    ovh-domain configure <app_key> <app_secret>
 
-If needed
+You have to validate the generated consumer key with the returned URL. Be careful with the validity duration !
 
-    export ENDPOINT=ovh-ca
+You can specify the endpoint on configure command
 
-Create a consumer key
+    ovh-domain configure <app_key> <app_secret> ovh-ca
 
-    ovh-domain consumer-key
-
-Validate your consumer key with the returned url, and
-
-    export CONSUMER_KEY=consumer_key
+More details can be found [here](https://api.ovh.com/g934.first_step_with_api) and [here](https://github.com/ovh/node-ovh).
 
 Usage
 ---

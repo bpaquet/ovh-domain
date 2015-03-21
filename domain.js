@@ -1,20 +1,15 @@
 #!/usr/bin/env node
 
-var argv = require('optimist').argv;
-var async = require('async');
+var argv = require('optimist').argv,
+  async = require('async'),
+  path = require('path'),
+  fs = require('fs');
+
+var config_file = path.join(process.env.HOME, '.ovh-domain.config');
+var api_config = {};
 
 function api() {
-  if (process.env.APP_KEY === undefined || process.env.APP_SECRET === undefined || process.env.CONSUMER_KEY === undefined) {
-    console.error('Please set env vars APP_KEY APP_SECRET CONSUMER_KEY');
-    process.exit(1);
-  }
-  var ovh = require('ovh')({
-    endpoint: process.env.ENDPOINT || 'ovh-eu',
-    appKey: process.env.APP_KEY,
-    appSecret: process.env.APP_SECRET,
-    consumerKey: process.env.CONSUMER_KEY,
-    debug: argv.debug,
-  });
+  var ovh = require('ovh')(api_config);
   return function(method, url, body, callback) {
     if (!callback) {
       callback = body;
@@ -60,9 +55,13 @@ function read_zone(name, callback) {
 
 var commands = {
   help: {
+    no_conf: true,
     run: function(params) {
       if (params.length > 0) {
         if (commands[params[0]]) {
+          if (commands[params[0]].syntax) {
+            console.log('Syntax:', commands[params[0]].syntax());
+          }
           commands[params[0]].help();
         }
         else {
@@ -80,17 +79,18 @@ var commands = {
     },
     help: function() {
       console.log('This help page :)');
-      process.exit(0);
     },
     args_min: 0,
   },
-  consumer_key: {
-    run: function() {
-      var ovh = require('ovh')({
-        endpoint: process.env.ENDPOINT || 'ovh-eu',
-        appKey: process.env.APP_KEY,
-        appSecret: process.env.APP_SECRET,
-      });
+  configure: {
+    no_conf: true,
+    run: function(params) {
+      var c = {
+        endpoint: params[2] || 'ovh-eu',
+        appKey: params[0],
+        appSecret: params[1],
+      };
+      var ovh = require('ovh')(c);
       ovh.request('POST', '/auth/credential', {
         'accessRules': [
           { 'method': 'GET', 'path': '/*'},
@@ -105,13 +105,20 @@ var commands = {
           process.exit(1);
         }
         console.log('Consumer key:', credential.consumerKey);
-        console.log('Please validate this key on:', credential.validationUrl);
+        console.log('Please validate this consumer key on:', credential.validationUrl);
+        c.consumerKey = credential.consumerKey;
+        fs.writeFileSync(config_file, JSON.stringify(c));
       });
     },
+    syntax: function() {
+      return 'configure <application_key> <application_secret> [endpoint]';
+    },
     help: function() {
-      console.log('Syntax: ovh-domain consumer-key');
-      console.log('Generate a consumer key');
-    }
+      console.log('Configure ovh-domain by generating a consumer key.');
+      console.log('Write a config file to $HOME/.ovh-domain.config');
+      console.log('Default value for endpoint is ovh-eu');
+    },
+    args_min: 2,
   },
   zones: {
     run: function() {
@@ -122,8 +129,10 @@ var commands = {
         });
       });
     },
+    syntax: function() {
+      return 'domains';
+    },
     help: function() {
-      console.log('Syntax: ovh-domain domains');
       console.log('List available domains');
     }
   },
@@ -151,8 +160,10 @@ var commands = {
         });
       });
     },
+    syntax: function() {
+      return 'show <zone_name>';
+    },
     help: function() {
-      console.log('Syntax: ovh-domain show <zone_name>');
       console.log('List all records in a zone');
     },
     args_min : 1,
@@ -177,8 +188,10 @@ var commands = {
         });
       });
     },
+    syntax: function() {
+      return 'create <zone_name> <record_name> <type> <target>';
+    },
     help: function() {
-      console.log('Syntax: ovh-domain create <zone_name> <record_name> <type> <target>');
       console.log('Create a new record in a given zone.');
     },
     args_min : 4,
@@ -204,8 +217,10 @@ var commands = {
         });
       });
     },
+    syntax: function() {
+      return 'create <zone_name> <record_name> <target>';
+    },
     help: function() {
-      console.log('Syntax: ovh-domain create <zone_name> <record_name> <target>');
       console.log('Update a record in a given zone.');
     },
     args_min : 3,
@@ -222,8 +237,10 @@ var commands = {
         });
       });
     },
+    syntax: function() {
+      return 'delete <zone_name> <record_name>';
+    },
     help: function() {
-      console.log('Syntax: ovh-domain delete <zone_name> <record_name>');
       console.log('Delete a record in a given zone.');
     },
     args_min : 2,
@@ -237,9 +254,22 @@ if (!commands[c]) {
 }
 
 if (commands[c].args_min && argv._.length < commands[c].args_min) {
-  console.error('Unable to parse commande line !');
-  commands[c].help();
+  console.log('Syntax error:', commands[c].syntax());
   process.exit(1);
+}
+
+if (commands[c].no_conf === undefined) {
+  if (fs.existsSync(config_file)) {
+    api_config = JSON.parse(fs.readFileSync(config_file));
+  }
+  else {
+    console.error('Please run ovh-domain configure');
+    process.exit(1);
+  }
+}
+
+if (argv.debug) {
+  api_config.debug = true;
 }
 
 commands[c].run(argv._);
