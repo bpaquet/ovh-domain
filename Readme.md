@@ -6,7 +6,7 @@ Command line tool to view and edit OVH Domain zone through api.
 Installation
 ---
 
-    npm install -g ovh-domain
+    npm install -g node-ovh-domain
 
 Configuration
 ---
